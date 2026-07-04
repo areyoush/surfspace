@@ -1,0 +1,12 @@
+<h1>Submit a new website</h1>
+<form action="/submit" method="POST">
+    <input type="text" name="url">
+    <input type="submit" value="Submit">
+</form>
+
+<h2>Existing Links</h2>
+<ul>
+    {{range .Links}}
+    <li><a href="/{{.Id}}">{{.Id}}</a></li>
+    {{end}}
+</ul>

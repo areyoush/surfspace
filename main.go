@@ -3,6 +3,7 @@ package main
 import (
 	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -21,7 +22,8 @@ var linkMap = map[string]*Link{
 
 func main() {
 	r := gin.Default()
-
+	
+	r.LoadHTMLGlob("templates/*")
 	r.GET("/", IndexHandler)
 	r.GET("/:id", RedirectHandler)
 	r.POST("/submit", SubmitHandler)
@@ -45,30 +47,19 @@ func RedirectHandler(c *gin.Context) {
 func generateRandomString(length int) string {
 	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	result := ""
+	var sb strings.Builder
+	sb.Grow(length)
 	for range length {
 		index := seededRand.Intn(len(charset))
-		result += string(charset[index])
+		sb.WriteByte(charset[index])
 	}
-
-	return result
+	return sb.String()
 } 
 
 func IndexHandler(c *gin.Context) {
-	html := `<h1>Submit a new website</h1>
-	<form action="/submit" method="POST">
-	<input type="text" name="url">
-	<input type="submit" value="Submit">
-	</form>
-	<h2>Existing Links</h2>
-	<ul>`
-
-	for _, link := range linkMap {
-		html += `<li><a href="/` + link.Id + `">` + link.Id + `</a></li>`
-	}
-	html += `</ul>`
-
-	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(html))
+	c.HTML(http.StatusOK, "index.html", gin.H{
+		"Links": linkMap,
+	})
 }
 
 func SubmitHandler(c *gin.Context) {
@@ -79,7 +70,7 @@ func SubmitHandler(c *gin.Context) {
 		return
 	}
 
-	if !(len(url) >= 4 && (url[:4] == "http" || url[:5] == "https")) {
+	if !strings.HasPrefix(url, "http") {
 		url = "https://" + url
 	}
 
